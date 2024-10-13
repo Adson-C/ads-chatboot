@@ -43,6 +43,19 @@ def salvar_novos_usuarios(nome, senha):
         with open(PASTA_USUARIOS / nome_arquivo, 'wb') as f:
             pickle.dump({'nome_usuario': nome, 'senha': senha}, f)
         return True
+    
+# VALIDAR USUÁRIO SENHA
+def validar_senha(nome, senha):
+    nome_arquivo = unidecode(nome.replace(' ', '_').lower())
+    if not (PASTA_USUARIOS / nome_arquivo).exists():
+        return False
+    else:
+        with open(PASTA_USUARIOS / nome_arquivo, 'rb') as f:
+            arquivo_senha = pickle.load(f)
+        if arquivo_senha['senha'] == senha:
+            return True
+        else:
+            return False
 
 # PAGINAS ====================
 # tela de login
@@ -53,15 +66,27 @@ def pag_login():
     with tb1.form(key='login'):
         nome = st.text_input('Digite seu nome de usuario')
         senha = st.text_input('Digite sua senha', type='password')
-        st.form_submit_button('Entrar')
+        if st.form_submit_button('Entrar'):
+            _login_usuarios(nome, senha)
 
     with tb2.form(key='cadastro'):
         nome = st.text_input('Cadastre um novo usuario')
         senha = st.text_input('Cadastre uma nova senha', type='password')
         if st.form_submit_button('Cadastrar'):
             _cadastrar_usuarios(nome, senha)
+            
+# Login usuarios
+def _login_usuarios(nome, senha):
+    if validar_senha(nome, senha):
+        st.success('Login efetuado com sucesso!')
+        time.sleep(1)
+        st.session_state['usuario_logado'] = nome.upper()
+        mudar_pagina('chat')
+        st.rerun()
+    else:
+        st.error('Erro ao logar usuario!')
         
-# Cadastro
+# Cadastro usuarios
 def _cadastrar_usuarios(nome, senha):
     if salvar_novos_usuarios(nome, senha):
         st.success('Cadastrado com sucesso!')
