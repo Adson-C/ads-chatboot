@@ -56,6 +56,12 @@ def validar_senha(nome, senha):
             return True
         else:
             return False
+# RETORNAR LISTA USUARIOS 
+def lista_usuarios():
+    usuarios = list(PASTA_USUARIOS.glob("*"))
+    usuarios = [u.stem.upper() for u in usuarios]
+    return usuarios
+
 
 # PAGINAS ====================
 # tela de login
@@ -107,7 +113,7 @@ def pagina_chat():
     st.divider()
 
     usuario_logado = st.session_state['usuario_logado']
-    conversando_com = 'Giselle'
+    conversando_com = st.session_state['conversando_com']
     mensagens = ler_mensagen_armazenadas(usuario_logado, conversando_com)
 
     for mensagem in mensagens:
@@ -130,6 +136,27 @@ def inicializa_aplicacao():
         mudar_pagina('login')
     if not 'usuario_logado' in st.session_state:
         st.session_state['usuario_logado'] = ''
+    if not 'conversando_com' in st.session_state:
+        st.session_state['conversando_com'] = ''
+# Pagina seleção conversa
+def pagina_selecao_conversa(elemento):
+    # conversas
+    if not st.session_state['conversando_com'] == '':
+        elemento.title(f'😏 Conversando com :green[{st.session_state["conversando_com"]}]')
+        elemento.divider()
+    usuarios = lista_usuarios()
+    usuarios = [u for u in usuarios if u != st.session_state['usuario_logado']]
+    conversando_com = elemento.selectbox('Selecione o usuário para conversar',
+                                          usuarios)
+    elemento.button('Iniciar conversa',
+              on_click=selecionar_conversa,
+              args=(conversando_com, ))
+#  selecionar conversa
+def selecionar_conversa(conversando_com):
+    st.session_state['conversando_com'] = conversando_com
+    st.success(f'Iniciando conversa com {conversando_com}')
+    time.sleep(1)
+    mudar_pagina('chat')
         
 def main():
     inicializa_aplicacao()
@@ -137,7 +164,13 @@ def main():
     if st.session_state['pagina_atual'] == 'login':
         pag_login()
     elif st.session_state['pagina_atual'] == 'chat':
-        pagina_chat()
+        if st.session_state['conversando_com'] == '':
+            container = st.container()
+            pagina_selecao_conversa(container)
+        else:
+            pagina_chat()
+            container = st.sidebar.container()
+            pagina_selecao_conversa(container)
 
 if __name__ == '__main__':
     main()
